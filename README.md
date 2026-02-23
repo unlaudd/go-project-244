@@ -6,7 +6,7 @@ CLI-утилита для подсчёта размера файлов и дир
 [![Actions Status](https://github.com/unlaudd/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/unlaudd/go-project-244/actions)
 
 ## Демо
-[![asciicast](https://asciinema.org/a/HjRnoGnQiV77bmRr.svg)](https://asciinema.org/a/HjRnoGnQiV77bmRr)
+[![asciicast](https://asciinema.org/a/SRjJuQRQrhNX7rjZ.svg)](https://asciinema.org/a/SRjJuQRQrhNX7rjZ)
 
 ## Статус CI и качества кода
 [![CI](https://github.com/unlaudd/go-project-244/actions/workflows/ci.yml/badge.svg)](https://github.com/unlaudd/go-project-244/actions/workflows/ci.yml)

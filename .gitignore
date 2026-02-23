@@ -12,3 +12,6 @@ vendor/
 .idea/
 .vscode/
 *.swp
+
+# Asciinema файлы
+*.cast
