@@ -26,9 +26,9 @@ jobs:
         run: go mod download
 
       - name: Run linter
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
+        uses: golangci/golangci-lint-action@ec5d18412c0aeab7936cb16880d708ba2a64e1ae
         with:
-          version: "1.64"
+          version: v1.64
           args: --timeout=5m
 
       - name: Run tests with coverage
