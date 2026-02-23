@@ -12,39 +12,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
         with:
-          go-version: '1.25.5'
+          go-version: '1.25'
           cache: true
 
       - name: Install dependencies
         run: go mod download
 
       - name: Run linter
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
         with:
-          version: latest
+          version: v1.64
           args: --timeout=5m
 
       - name: Run tests with coverage
         run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Fix coverage paths for SonarQube
-        run: |
-          sed -i 's|'$PWD'|/github/workspace|g' coverage.out
-
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.projectKey=unlaudd_go-project-244
+            -Dsonar.organization=Denis-Lysenko
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/*_test.go,**/testdata/**,**/vendor/**,**/bin/**
             -Dsonar.go.coverage.reportPaths=coverage.out
-            -Dsonar.tests=.
-            -Dsonar.test.exclusions=**/vendor/**
-            -Dsonar.go.tests.reportPaths=test-report.out
