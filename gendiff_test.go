@@ -10,43 +10,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// normalizeLineEndings заменяет \r\n на \n для кросс-платформенного сравнения
+// Helper: нормализация окончаний строк
 func normalizeLineEndings(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "\n")
 }
 
-func TestGenDiffJsonFlat(t *testing.T) {
-	fixtureDir := filepath.Join("testdata", "fixture")
-	file1 := filepath.Join(fixtureDir, "file1.json")
-	file2 := filepath.Join(fixtureDir, "file2.json")
-	expectedFile := filepath.Join(fixtureDir, "expected_stylish.txt")
+// Helper: загрузка и нормализация expected-файла
+func loadExpectedFixture(t *testing.T, fixturePath string) string {
+	t.Helper()
+	content, err := os.ReadFile(fixturePath)
+	require.NoError(t, err, "Failed to read fixture: %s", fixturePath)
+	return normalizeLineEndings(string(content))
+}
 
-	result, err := GenDiff(file1, file2, "stylish")
+// Helper: сравнение результата GenDiff с expected-файлом
+func assertGenDiffEquals(t *testing.T, file1, file2, format, expectedFile, description string) {
+	t.Helper()
+	result, err := GenDiff(file1, file2, format)
 	require.NoError(t, err, "GenDiff should not return error")
 
-	expectedBytes, err := os.ReadFile(expectedFile)
-	require.NoError(t, err, "Failed to read expected fixture")
-	expected := normalizeLineEndings(string(expectedBytes))
+	expected := loadExpectedFixture(t, expectedFile)
 	resultNormalized := normalizeLineEndings(result)
 
-	assert.Equal(t, expected, resultNormalized, "Output should match expected diff")
+	assert.Equal(t, expected, resultNormalized, description)
+}
+
+func TestGenDiffJsonFlat(t *testing.T) {
+	fixtureDir := filepath.Join("testdata", "fixture")
+	assertGenDiffEquals(
+		t,
+		filepath.Join(fixtureDir, "file1.json"),
+		filepath.Join(fixtureDir, "file2.json"),
+		"stylish",
+		filepath.Join(fixtureDir, "expected_stylish.txt"),
+		"JSON output should match expected diff",
+	)
 }
 
 func TestGenDiffYamlFlat(t *testing.T) {
 	fixtureDir := filepath.Join("testdata", "fixture")
-	file1 := filepath.Join(fixtureDir, "file1.yml")
-	file2 := filepath.Join(fixtureDir, "file2.yml")
-	expectedFile := filepath.Join(fixtureDir, "expected_stylish_yaml.txt")
-
-	result, err := GenDiff(file1, file2, "stylish")
-	require.NoError(t, err, "GenDiff should not return error for YAML files")
-
-	expectedBytes, err := os.ReadFile(expectedFile)
-	require.NoError(t, err, "Failed to read expected YAML fixture")
-	expected := normalizeLineEndings(string(expectedBytes))
-	resultNormalized := normalizeLineEndings(result)
-
-	assert.Equal(t, expected, resultNormalized, "YAML output should match expected diff")
+	assertGenDiffEquals(
+		t,
+		filepath.Join(fixtureDir, "file1.yml"),
+		filepath.Join(fixtureDir, "file2.yml"),
+		"stylish",
+		filepath.Join(fixtureDir, "expected_stylish_yaml.txt"),
+		"YAML output should match expected diff",
+	)
 }
 
 func TestGenDiffIdenticalFiles(t *testing.T) {
