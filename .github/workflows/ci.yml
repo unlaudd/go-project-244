@@ -41,7 +41,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=unlaudd_go-project-244
-            -Dsonar.organization=Denis-Lysenko
+            -Dsonar.organization=unlaudd
             -Dsonar.sources=.
             -Dsonar.exclusions=**/*_test.go,**/testdata/**,**/vendor/**,**/bin/**
             -Dsonar.go.coverage.reportPaths=coverage.out
