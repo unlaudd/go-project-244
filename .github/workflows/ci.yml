@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32
+        with:
+          go-version: '1.21'
+          cache: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@3a919529898de77ec3da873e3063ca4b10e7f5cc
+        with:
+          version: v1.54
+          args: --timeout=5m
+
+      - name: Run tests with coverage
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov (опционально)
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d
+        with:
+          file: ./coverage.out
+          fail_ci_if_error: false
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7295e71c9482faa8c346fc7fc8c2f4e9d3c8c7f2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
