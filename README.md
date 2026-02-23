@@ -17,3 +17,4 @@ CLI-утилита для подсчёта размера файлов и дир
 
 ```bash
 go build -o bin/hexlet-path-size cmd/hexlet-path-size/main.go
+```

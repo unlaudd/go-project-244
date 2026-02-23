@@ -41,7 +41,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@7295e71c9482faa8c346fc7fc8c2f4e9d3c8c7f2
+        uses: SonarSource/sonarcloud-github-action@f4395e8b59f7c6e5f5c5b5c5e5f5c5e5f5c5e5f5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
