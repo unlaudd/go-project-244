@@ -10,6 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Константы для тестовых фикстур
+const (
+	fixtureFile2JSON = "testdata/fixture/file2.json"
+)
+
 // Helper: нормализация окончаний строк
 func normalizeLineEndings(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "\n")
@@ -73,7 +78,7 @@ func TestGenDiffIdenticalFiles(t *testing.T) {
 }
 
 func TestGenDiffInvalidPath(t *testing.T) {
-	_, err := GenDiff("nonexistent.json", "testdata/fixture/file2.json", "stylish")
+	_, err := GenDiff("nonexistent.json", fixtureFile2JSON, "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse")
 }
@@ -100,7 +105,7 @@ func TestGenDiffUnknownFormat(t *testing.T) {
 	txtFile := filepath.Join(dir, "config.txt")
 	require.NoError(t, os.WriteFile(txtFile, []byte("key: value"), 0644))
 
-	_, err := GenDiff(txtFile, "testdata/fixture/file2.json", "stylish")
+	_, err := GenDiff(txtFile, fixtureFile2JSON, "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown format")
 }
@@ -110,7 +115,7 @@ func TestGenDiffInvalidJSON(t *testing.T) {
 	badJSON := filepath.Join(dir, "bad.json")
 	require.NoError(t, os.WriteFile(badJSON, []byte(`{"invalid": json}`), 0644)) // невалидный JSON
 
-	_, err := GenDiff(badJSON, "testdata/fixture/file2.json", "stylish")
+	_, err := GenDiff(badJSON, fixtureFile2JSON, "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse JSON")
 }
