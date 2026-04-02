@@ -32,7 +32,11 @@ jobs:
           args: --timeout=5m
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+        run: |
+            go test -v -coverprofile=coverage.out -covermode=atomic ./...
+            # Конвертируем пути из module-path в относительные
+            sed -i 's|github.com/unlaudd/go-project-244/||g' coverage.out
+
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8
