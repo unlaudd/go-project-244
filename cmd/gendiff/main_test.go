@@ -43,3 +43,16 @@ func TestCLISuccess(t *testing.T) {
 	require.NoError(t, runErr, "CLI execution should not return error")
 	assert.Contains(t, buf.String(), "key")
 }
+
+func TestCLIErrorPath(t *testing.T) {
+	// Проверяем, что при отсутствии аргументов возвращается ожидаемая ошибка
+	// Примечание: печать "Error: ..." в stderr происходит в main(),
+	// который мы не тестируем напрямую (из-за os.Exit)
+
+	app := NewApp()
+	err := app.Run([]string{"gendiff"}) // нет аргументов → ошибка
+
+	// Проверяем только возврат ошибки, а не вывод в stderr
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "two file paths are required")
+}
