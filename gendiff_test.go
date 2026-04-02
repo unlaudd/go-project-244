@@ -10,11 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Константы для тестовых фикстур
-const (
-	fixtureFile2JSON = "testdata/fixture/file2.json"
-)
-
 // Helper: нормализация окончаний строк
 func normalizeLineEndings(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "\n")
@@ -28,76 +23,56 @@ func loadExpectedFixture(t *testing.T, fixturePath string) string {
 	return normalizeLineEndings(string(content))
 }
 
-// Helper: сравнение результата GenDiff с expected-файлом
-func assertGenDiffEquals(t *testing.T, file1, file2, format, expectedFile, description string) {
-	t.Helper()
-	result, err := GenDiff(file1, file2, format)
-	require.NoError(t, err, "GenDiff should not return error")
+// ============================================================================
+// Тесты на вложенные структуры (покрывают и плоские случаи)
+// ============================================================================
 
-	expected := loadExpectedFixture(t, expectedFile)
-	resultNormalized := normalizeLineEndings(result)
-
-	assert.Equal(t, expected, resultNormalized, description)
-}
-
-func TestGenDiffJsonFlat(t *testing.T) {
+func TestGenDiffNestedJSON(t *testing.T) {
 	fixtureDir := filepath.Join("testdata", "fixture")
-	assertGenDiffEquals(
-		t,
-		filepath.Join(fixtureDir, "file1.json"),
-		filepath.Join(fixtureDir, "file2.json"),
+	result, err := GenDiff(
+		filepath.Join(fixtureDir, "file1_nested.json"),
+		filepath.Join(fixtureDir, "file2_nested.json"),
 		"stylish",
-		filepath.Join(fixtureDir, "expected_stylish.txt"),
-		"JSON output should match expected diff",
 	)
-}
-
-func TestGenDiffYamlFlat(t *testing.T) {
-	fixtureDir := filepath.Join("testdata", "fixture")
-	assertGenDiffEquals(
-		t,
-		filepath.Join(fixtureDir, "file1.yml"),
-		filepath.Join(fixtureDir, "file2.yml"),
-		"stylish",
-		filepath.Join(fixtureDir, "expected_stylish_yaml.txt"),
-		"YAML output should match expected diff",
-	)
-}
-
-func TestGenDiffIdenticalFiles(t *testing.T) {
-	fixtureDir := filepath.Join("testdata", "fixture")
-	file1 := filepath.Join(fixtureDir, "file1.json")
-
-	result, err := GenDiff(file1, file1, "stylish")
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "host: hexlet.io")
-	assert.Contains(t, result, "timeout: 50")
-	assert.NotContains(t, result, "  - ")
-	assert.NotContains(t, result, "  + ")
+	expected := loadExpectedFixture(t, filepath.Join(fixtureDir, "expected_stylish_nested.txt"))
+	assert.Equal(t, expected, normalizeLineEndings(result), "Nested JSON diff should match expected")
 }
+
+func TestGenDiffNestedYAML(t *testing.T) {
+	fixtureDir := filepath.Join("testdata", "fixture")
+	result, err := GenDiff(
+		filepath.Join(fixtureDir, "file1_nested.yml"),
+		filepath.Join(fixtureDir, "file2_nested.yml"),
+		"stylish",
+	)
+	require.NoError(t, err)
+
+	expected := loadExpectedFixture(t, filepath.Join(fixtureDir, "expected_stylish_nested.txt"))
+	assert.Equal(t, expected, normalizeLineEndings(result), "Nested YAML diff should match expected")
+}
+
+func TestGenDiffIdenticalNested(t *testing.T) {
+	fixtureDir := filepath.Join("testdata", "fixture")
+	file := filepath.Join(fixtureDir, "file1_nested.json")
+
+	result, err := GenDiff(file, file, "stylish")
+	require.NoError(t, err)
+
+	assert.NotContains(t, result, "  + ")
+	assert.NotContains(t, result, "  - ")
+	assert.Contains(t, result, "setting1: Value 1")
+}
+
+// ============================================================================
+// Тесты на обработку ошибок (граничные случаи — оставляем!)
+// ============================================================================
 
 func TestGenDiffInvalidPath(t *testing.T) {
-	_, err := GenDiff("nonexistent.json", fixtureFile2JSON, "stylish")
+	_, err := GenDiff("nonexistent.json", "testdata/fixture/file1_nested.json", "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse")
-}
-
-func TestFormatValueFloatDecimal(t *testing.T) {
-	// Создаём временные файлы с дробным числом
-	dir := t.TempDir()
-	file1 := filepath.Join(dir, "f1.json")
-	file2 := filepath.Join(dir, "f2.json")
-
-	// Пишем данные с дробным значением
-	require.NoError(t, os.WriteFile(file1, []byte(`{"rate": 3.14}`), 0644))
-	require.NoError(t, os.WriteFile(file2, []byte(`{"rate": 2.71}`), 0644))
-
-	result, err := GenDiff(file1, file2, "stylish")
-	require.NoError(t, err)
-	// Проверяем, что дробные числа отображаются корректно
-	assert.Contains(t, result, "3.14")
-	assert.Contains(t, result, "2.71")
 }
 
 func TestGenDiffUnknownFormat(t *testing.T) {
@@ -105,7 +80,7 @@ func TestGenDiffUnknownFormat(t *testing.T) {
 	txtFile := filepath.Join(dir, "config.txt")
 	require.NoError(t, os.WriteFile(txtFile, []byte("key: value"), 0644))
 
-	_, err := GenDiff(txtFile, fixtureFile2JSON, "stylish")
+	_, err := GenDiff(txtFile, "testdata/fixture/file1_nested.json", "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown format")
 }
@@ -113,25 +88,45 @@ func TestGenDiffUnknownFormat(t *testing.T) {
 func TestGenDiffInvalidJSON(t *testing.T) {
 	dir := t.TempDir()
 	badJSON := filepath.Join(dir, "bad.json")
-	require.NoError(t, os.WriteFile(badJSON, []byte(`{"invalid": json}`), 0644)) // невалидный JSON
+	require.NoError(t, os.WriteFile(badJSON, []byte(`{"invalid": json}`), 0644))
 
-	_, err := GenDiff(badJSON, fixtureFile2JSON, "stylish")
+	_, err := GenDiff(badJSON, "testdata/fixture/file1_nested.json", "stylish")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse JSON")
 }
 
+// ============================================================================
+// Тесты на форматирование значений (утилитарные — оставляем)
+// ============================================================================
+
+func TestFormatValueFloatDecimal(t *testing.T) {
+	dir := t.TempDir()
+	file1 := filepath.Join(dir, "f1.json")
+	file2 := filepath.Join(dir, "f2.json")
+
+	require.NoError(t, os.WriteFile(file1, []byte(`{"rate": 3.14}`), 0644))
+	require.NoError(t, os.WriteFile(file2, []byte(`{"rate": 2.71}`), 0644))
+
+	result, err := GenDiff(file1, file2, "stylish")
+	require.NoError(t, err)
+	assert.Contains(t, result, "3.14")
+	assert.Contains(t, result, "2.71")
+}
+
 func TestFormatValueSlice(t *testing.T) {
-	// Этот тест проверяет, что слайсы обрабатываются через default-кейс
 	dir := t.TempDir()
 	f1 := filepath.Join(dir, "a.json")
 	f2 := filepath.Join(dir, "b.json")
 
-	// JSON с массивом значений
 	require.NoError(t, os.WriteFile(f1, []byte(`{"items": [1, 2, 3]}`), 0644))
 	require.NoError(t, os.WriteFile(f2, []byte(`{"items": [4, 5]}`), 0644))
 
 	result, err := GenDiff(f1, f2, "stylish")
 	require.NoError(t, err)
-	// Проверяем, что слайс отформатирован (через %v)
 	assert.Contains(t, result, "items:")
+}
+
+func TestFormatValueNil(t *testing.T) {
+	result := formatValue(nil)
+	assert.Equal(t, "null", result)
 }

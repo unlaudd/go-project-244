@@ -28,7 +28,7 @@ func TestParseFileYAML(t *testing.T) {
 	res, err := ParseFile(file)
 	require.NoError(t, err)
 	assert.Equal(t, "val", res["key"])
-	assert.Equal(t, 42, res["num"]) // yaml.v3 парсит целые числа как int
+	assert.Equal(t, 42, res["num"])
 }
 
 func TestParseFileUnknownExt(t *testing.T) {
