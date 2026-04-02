@@ -10,7 +10,16 @@ import (
 )
 
 func main() {
-	app := &cli.App{
+	app := NewApp()
+	err := app.Run(os.Args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func NewApp() *cli.App {
+	return &cli.App{
 		Name:  "gendiff",
 		Usage: "Compares two configuration files and shows a difference.",
 		Flags: []cli.Flag{
@@ -38,11 +47,5 @@ func main() {
 			fmt.Println(result)
 			return nil
 		},
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
 	}
 }
