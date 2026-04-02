@@ -1,11 +1,11 @@
 package code
 
 import (
+	"code/internal/parser"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
-
-	"code/internal/parser"
 )
 
 // GenDiff сравнивает два конфигурационных файла и возвращает разницу в виде строки
@@ -54,7 +54,7 @@ func buildDiff(data1, data2 map[string]interface{}) string {
 		} else if !exists1 && exists2 {
 			// Ключ только во втором файле
 			result.WriteString(fmt.Sprintf("  + %s: %s\n", key, formatValue(val2)))
-		} else if val1 == val2 {
+		} else if reflect.DeepEqual(val1, val2) {
 			// Значения совпадают
 			result.WriteString(fmt.Sprintf("    %s: %s\n", key, formatValue(val1)))
 		} else {

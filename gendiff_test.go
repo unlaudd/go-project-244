@@ -77,3 +77,56 @@ func TestGenDiffInvalidPath(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse")
 }
+
+func TestFormatValueFloatDecimal(t *testing.T) {
+	// Создаём временные файлы с дробным числом
+	dir := t.TempDir()
+	file1 := filepath.Join(dir, "f1.json")
+	file2 := filepath.Join(dir, "f2.json")
+
+	// Пишем данные с дробным значением
+	require.NoError(t, os.WriteFile(file1, []byte(`{"rate": 3.14}`), 0644))
+	require.NoError(t, os.WriteFile(file2, []byte(`{"rate": 2.71}`), 0644))
+
+	result, err := GenDiff(file1, file2, "stylish")
+	require.NoError(t, err)
+	// Проверяем, что дробные числа отображаются корректно
+	assert.Contains(t, result, "3.14")
+	assert.Contains(t, result, "2.71")
+}
+
+func TestGenDiffUnknownFormat(t *testing.T) {
+	dir := t.TempDir()
+	txtFile := filepath.Join(dir, "config.txt")
+	require.NoError(t, os.WriteFile(txtFile, []byte("key: value"), 0644))
+
+	_, err := GenDiff(txtFile, "testdata/fixture/file2.json", "stylish")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown format")
+}
+
+func TestGenDiffInvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	badJSON := filepath.Join(dir, "bad.json")
+	require.NoError(t, os.WriteFile(badJSON, []byte(`{"invalid": json}`), 0644)) // невалидный JSON
+
+	_, err := GenDiff(badJSON, "testdata/fixture/file2.json", "stylish")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse JSON")
+}
+
+func TestFormatValueSlice(t *testing.T) {
+	// Этот тест проверяет, что слайсы обрабатываются через default-кейс
+	dir := t.TempDir()
+	f1 := filepath.Join(dir, "a.json")
+	f2 := filepath.Join(dir, "b.json")
+
+	// JSON с массивом значений
+	require.NoError(t, os.WriteFile(f1, []byte(`{"items": [1, 2, 3]}`), 0644))
+	require.NoError(t, os.WriteFile(f2, []byte(`{"items": [4, 5]}`), 0644))
+
+	result, err := GenDiff(f1, f2, "stylish")
+	require.NoError(t, err)
+	// Проверяем, что слайс отформатирован (через %v)
+	assert.Contains(t, result, "items:")
+}
