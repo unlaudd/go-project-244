@@ -1,6 +1,11 @@
 # gendiff
 
-CLI-утилита для подсчёта размера файлов и директорий.
+CLI-утилита для сравнения конфигурационных файлов (JSON, YAML) и вывода различий.
+
+Поддерживает три формата вывода:
+- **stylish** (по умолчанию) — иерархический вывод с отступами и маркерами `+` / `-`
+- **plain** — плоский список изменений с полными путями: `Property 'common.setting' was updated...`
+- **json** — структурированный JSON для интеграции с другими системами
 
 ### Статус тестов и линтера Hexlet:
 [![Actions Status](https://github.com/unlaudd/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/unlaudd/go-project-244/actions)
