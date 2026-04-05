@@ -1,13 +1,15 @@
+// Package formatters предоставляет реализацию JSON-форматера для вывода
+// структурированных различий между конфигурационными файлами.
 package formatters
 
 import (
 	"encoding/json"
 )
 
-// jsonNode — внутреннее представление для JSON-сериализации.
-// Поля с тегами `omitempty` не попадут в вывод, если они пустые.
+// jsonNode — внутреннее представление узла для JSON-сериализации.
+// Использует теги omitempty, чтобы исключать пустые поля из вывода.
 type jsonNode struct {
-	Status   string              `json:"status"` // "added", "removed", "unchanged", "changed"
+	Status   string              `json:"status"`
 	Value    interface{}         `json:"value,omitempty"`
 	OldValue interface{}         `json:"oldValue,omitempty"`
 	NewValue interface{}         `json:"newValue,omitempty"`
@@ -15,45 +17,30 @@ type jsonNode struct {
 }
 
 // FormatJSON форматирует дерево различий в структурированный JSON.
+// Вывод использует отступы для читаемости (MarshalIndent).
 func FormatJSON(nodes []DiffNode) string {
-	// Корневой объект: ключи верхнего уровня - их статусы
 	root := make(map[string]jsonNode)
-
 	for _, node := range nodes {
 		root[node.Key] = buildJSONNode(node)
 	}
 
-	// MarshalIndent для красивого вывода с отступами
 	output, err := json.MarshalIndent(root, "", "  ")
 	if err != nil {
-		// Здесь возвращаем пустой объект, так как ошибка маловероятна
+		// Ошибка сериализации маловероятна при корректной структуре,
+		// но на всякий случай возвращаем валидный пустой объект.
 		return "{}"
 	}
 
 	return string(output)
 }
 
-// buildJSONNode рекурсивно преобразует DiffNode в jsonNode
+// buildJSONNode преобразует DiffNode в jsonNode для сериализации.
+// Рекурсивно обрабатывает вложенные объекты через поле Children.
 func buildJSONNode(node DiffNode) jsonNode {
-	jn := jsonNode{
-		Status: node.State,
-	}
+	jn := jsonNode{Status: node.State}
 
 	switch node.State {
-	case "added":
-		if node.Children != nil {
-			// Добавлен объект - рекурсивно строим детей
-			jn.Children = buildChildrenMap(node.Children)
-		} else {
-			jn.Value = node.Value
-		}
-	case "removed":
-		if node.Children != nil {
-			jn.Children = buildChildrenMap(node.Children)
-		} else {
-			jn.Value = node.Value
-		}
-	case "unchanged":
+	case "added", "removed", "unchanged":
 		if node.Children != nil {
 			jn.Children = buildChildrenMap(node.Children)
 		} else {
@@ -61,10 +48,10 @@ func buildJSONNode(node DiffNode) jsonNode {
 		}
 	case "changed":
 		if node.Children != nil {
-			// Изменён объект - рекурсивно сравниваем детей
 			jn.Children = buildChildrenMap(node.Children)
 		} else {
-			// Изменено примитивное значение - показываем старое и новое
+			// Для изменённых примитивов сохраняем оба значения,
+			// чтобы потребитель мог увидеть, что именно изменилось.
 			jn.OldValue = node.OldValue
 			jn.NewValue = node.NewValue
 		}
@@ -73,7 +60,9 @@ func buildJSONNode(node DiffNode) jsonNode {
 	return jn
 }
 
-// buildChildrenMap преобразует слайс детей в map[string]jsonNode для JSON
+// buildChildrenMap преобразует слайс детей в map[string]jsonNode.
+// JSON-формат требует объектной структуры для вложенных ключей,
+// поэтому используем map вместо слайса.
 func buildChildrenMap(children []DiffNode) map[string]jsonNode {
 	result := make(map[string]jsonNode, len(children))
 	for _, child := range children {

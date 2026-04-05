@@ -1,3 +1,4 @@
+// Package main содержит точку входа CLI-утилиты gendiff и её тесты.
 package main
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestCLIMissingArgs проверяет, что утилита возвращает ошибку при отсутствии аргументов.
 func TestCLIMissingArgs(t *testing.T) {
 	app := NewApp()
 	err := app.Run([]string{"gendiff"})
@@ -18,6 +20,8 @@ func TestCLIMissingArgs(t *testing.T) {
 	assert.Contains(t, err.Error(), "two file paths are required")
 }
 
+// TestCLISuccess проверяет успешное выполнение утилиты с валидными аргументами.
+// Тест перехватывает stdout, чтобы проверить вывод без загрязнения консоли.
 func TestCLISuccess(t *testing.T) {
 	dir := t.TempDir()
 	f1 := filepath.Join(dir, "a.json")
@@ -25,6 +29,8 @@ func TestCLISuccess(t *testing.T) {
 	require.NoError(t, os.WriteFile(f1, []byte(`{"key":"val1"}`), 0644))
 	require.NoError(t, os.WriteFile(f2, []byte(`{"key":"val2"}`), 0644))
 
+	// Перехватываем stdout для проверки вывода
+	// Сохраняем оригинал, чтобы восстановить после теста
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
@@ -32,7 +38,8 @@ func TestCLISuccess(t *testing.T) {
 	app := NewApp()
 	runErr := app.Run([]string{"gendiff", f1, f2})
 
-	// ✅ errcheck: явно проверяем ошибки закрытия и копирования
+	// Восстанавливаем stdout и читаем перехваченный вывод
+	// Ошибки закрытия и копирования проверяем явно (требование errcheck)
 	require.NoError(t, w.Close(), "failed to close write end of pipe")
 	os.Stdout = oldStdout
 
@@ -44,15 +51,14 @@ func TestCLISuccess(t *testing.T) {
 	assert.Contains(t, buf.String(), "key")
 }
 
+// TestCLIErrorPath проверяет обработку ошибки валидации аргументов.
+// Примечание: вывод "Error: ..." в stderr происходит в main(),
+// который не тестируется напрямую из-за os.Exit(1).
+// Здесь проверяем только возврат ошибки из Action-функции.
 func TestCLIErrorPath(t *testing.T) {
-	// Проверяем, что при отсутствии аргументов возвращается ожидаемая ошибка
-	// Примечание: печать "Error: ..." в stderr происходит в main(),
-	// который мы не тестируем напрямую (из-за os.Exit)
-
 	app := NewApp()
-	err := app.Run([]string{"gendiff"}) // нет аргументов - ошибка
+	err := app.Run([]string{"gendiff"})
 
-	// Проверяем только возврат ошибки, а не вывод в stderr
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "two file paths are required")
 }

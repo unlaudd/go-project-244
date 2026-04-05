@@ -1,3 +1,5 @@
+// Package formatters предоставляет фабрику для выбора и применения
+// форматеров вывода различий между конфигурационными файлами.
 package formatters
 
 import "fmt"
@@ -6,7 +8,6 @@ import "fmt"
 // Если format пустой, используется "stylish" по умолчанию.
 // Возвращает отформатированную строку или ошибку, если формат неизвестен.
 func Format(nodes []DiffNode, format string) (string, error) {
-	// Форматер по умолчанию для библиотеки
 	if format == "" {
 		format = "stylish"
 	}

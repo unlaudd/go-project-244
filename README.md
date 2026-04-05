@@ -16,5 +16,9 @@ CLI-утилита для подсчёта размера файлов и дир
 ## Установка
 
 ```bash
-go build -o bin/hexlet-path-size cmd/hexlet-path-size/main.go
+# Сборка из исходников
+make build
+
+# Или вручную
+go build -o bin/gendiff ./cmd/gendiff
 ```

@@ -1,3 +1,5 @@
+// Package formatters содержит тесты для JSON-форматера.
+// Проверяет структуру вывода, валидность JSON и рекурсивную обработку вложенных объектов.
 package formatters
 
 import (
@@ -8,6 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestFormatJSON проверяет базовую структуру JSON-вывода:
+// статусы ключей, обработку разных состояний (added/removed/changed/unchanged),
+// и вложенность детей внутри поля "children" для изменённых объектов.
 func TestFormatJSON(t *testing.T) {
 	nodes := []DiffNode{
 		{Key: "common", State: "changed", Children: []DiffNode{
@@ -22,41 +27,42 @@ func TestFormatJSON(t *testing.T) {
 
 	result := FormatJSON(nodes)
 
-	// 1. Проверяем, что это валидный JSON
+	// Проверяем, что вывод — валидный JSON
 	var parsed map[string]interface{}
 	err := json.Unmarshal([]byte(result), &parsed)
 	require.NoError(t, err, "Output should be valid JSON")
 
-	// 2. Проверяем структуру корневого ключа "common"
+	// Корневой ключ "common" имеет статус и детей внутри "children"
+	// Это архитектурное решение: изменённые объекты хранят сравнение вложенных ключей отдельно
 	common, ok := parsed["common"].(map[string]interface{})
 	require.True(t, ok, "'common' should be an object")
 	assert.Equal(t, "changed", common["status"])
 
-	// 3. Дети находятся внутри "children"
 	children, ok := common["children"].(map[string]interface{})
 	require.True(t, ok, "'common' should have 'children' object")
 
-	// 4. Проверяем "follow" внутри children
+	// Проверяем добавленный ключ внутри детей
 	follow, ok := children["follow"].(map[string]interface{})
 	require.True(t, ok, "'follow' should be an object")
 	assert.Equal(t, "added", follow["status"])
 	assert.Equal(t, false, follow["value"])
 
-	// 5. Проверяем "setting3" (changed с oldValue/newValue)
+	// Проверяем изменённый примитив: должны быть оба значения
 	setting3, ok := children["setting3"].(map[string]interface{})
 	require.True(t, ok)
 	assert.Equal(t, "changed", setting3["status"])
 	assert.Equal(t, true, setting3["oldValue"])
 	assert.Nil(t, setting3["newValue"])
 
-	// 6. Проверяем, что в выводе есть ключевые поля
+	// sanity-check: убеждаемся, что ключевые поля присутствуют в сыром выводе
 	assert.Contains(t, result, `"status": "added"`)
 	assert.Contains(t, result, `"value": false`)
 	assert.Contains(t, result, `"children"`)
 }
 
+// TestFormatJSONNestedObject проверяет рекурсивную обработку глубоко вложенных объектов.
+// Убеждаемся, что структура "children" сохраняется на всех уровнях вложенности.
 func TestFormatJSONNestedObject(t *testing.T) {
-	// Проверяем рекурсивную обработку вложенных объектов
 	nodes := []DiffNode{
 		{Key: "root", State: "changed", Children: []DiffNode{
 			{Key: "nested", State: "changed", Children: []DiffNode{
@@ -70,6 +76,7 @@ func TestFormatJSONNestedObject(t *testing.T) {
 	var parsed map[string]interface{}
 	require.NoError(t, json.Unmarshal([]byte(result), &parsed))
 
+	// Последовательно спускаемся по вложенным "children"
 	root := parsed["root"].(map[string]interface{})
 	children := root["children"].(map[string]interface{})
 	nested := children["nested"].(map[string]interface{})
