@@ -51,6 +51,7 @@ func renderPlain(nodes []DiffNode, path []string, lines *[]string) {
 
 // formatPlainValue форматирует отдельное значение для plain-вывода.
 // Строки оборачиваются в одинарные кавычки, сложные типы заменяются маркером.
+// Целые числа выводятся без десятичной точки для читаемости.
 func formatPlainValue(val interface{}) string {
 	switch v := val.(type) {
 	case nil:
@@ -59,6 +60,10 @@ func formatPlainValue(val interface{}) string {
 		return fmt.Sprintf("'%s'", v)
 	case bool:
 		return fmt.Sprintf("%t", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
 	case float64:
 		// Целые числа выводим без десятичной точки для читаемости
 		if v == float64(int64(v)) {
