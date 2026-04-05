@@ -50,7 +50,7 @@ func TestCLIErrorPath(t *testing.T) {
 	// который мы не тестируем напрямую (из-за os.Exit)
 
 	app := NewApp()
-	err := app.Run([]string{"gendiff"}) // нет аргументов → ошибка
+	err := app.Run([]string{"gendiff"}) // нет аргументов - ошибка
 
 	// Проверяем только возврат ошибки, а не вывод в stderr
 	assert.Error(t, err)
