@@ -15,3 +15,6 @@ vendor/
 
 # Asciinema файлы
 *.cast
+
+# Покрытие
+coverage.out
