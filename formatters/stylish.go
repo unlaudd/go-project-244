@@ -31,49 +31,49 @@ func formatStylishNodes(nodes []DiffNode, depth int) string {
 		switch node.State {
 		case "unchanged":
 			// Неизменённые ключи выводятся с отступом, без маркера
-			sb.WriteString(fmt.Sprintf("%s%s: %s\n", keyIndent, node.Key, formatStylishValue(node.Value)))
+			fmt.Fprintf(&sb, "%s%s: %s\n", keyIndent, node.Key, formatStylishValue(node.Value))
 
 		case "added":
 			if isMap(node.Value) {
 				// Добавлен объект: открываем блок, рекурсивно форматируем содержимое без маркеров
-				sb.WriteString(fmt.Sprintf("%s+ %s: {\n", markerIndent, node.Key))
+				fmt.Fprintf(&sb, "%s+ %s: {\n", markerIndent, node.Key)
 				sb.WriteString(formatStylishMapContent(node.Value.(map[string]interface{}), depth+1))
-				sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+				fmt.Fprintf(&sb, "%s}\n", keyIndent)
 			} else {
-				sb.WriteString(fmt.Sprintf("%s+ %s: %s\n", markerIndent, node.Key, formatStylishValue(node.Value)))
+				fmt.Fprintf(&sb, "%s+ %s: %s\n", markerIndent, node.Key, formatStylishValue(node.Value))
 			}
 
 		case "removed":
 			if isMap(node.Value) {
-				sb.WriteString(fmt.Sprintf("%s- %s: {\n", markerIndent, node.Key))
+				fmt.Fprintf(&sb, "%s- %s: {\n", markerIndent, node.Key)
 				sb.WriteString(formatStylishMapContent(node.Value.(map[string]interface{}), depth+1))
-				sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+				fmt.Fprintf(&sb, "%s}\n", keyIndent)
 			} else {
-				sb.WriteString(fmt.Sprintf("%s- %s: %s\n", markerIndent, node.Key, formatStylishValue(node.Value)))
+				fmt.Fprintf(&sb, "%s- %s: %s\n", markerIndent, node.Key, formatStylishValue(node.Value))
 			}
 
 		case "changed":
 			if node.Children != nil {
 				// Оба значения — map: рекурсивно сравниваем детей, ключ без маркера
-				sb.WriteString(fmt.Sprintf("%s%s: {\n", keyIndent, node.Key))
+				fmt.Fprintf(&sb, "%s%s: {\n", keyIndent, node.Key)
 				sb.WriteString(formatStylishNodes(node.Children, depth+1))
-				sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+				fmt.Fprintf(&sb, "%s}\n", keyIndent)
 			} else {
 				// Изменено примитивное значение: показываем старое и новое с маркерами
 				if isMap(node.OldValue) {
-					sb.WriteString(fmt.Sprintf("%s- %s: {\n", markerIndent, node.Key))
+					fmt.Fprintf(&sb, "%s- %s: {\n", markerIndent, node.Key)
 					sb.WriteString(formatStylishMapContent(node.OldValue.(map[string]interface{}), depth+1))
-					sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+					fmt.Fprintf(&sb, "%s}\n", keyIndent)
 				} else {
-					sb.WriteString(fmt.Sprintf("%s- %s: %s\n", markerIndent, node.Key, formatStylishValue(node.OldValue)))
+					fmt.Fprintf(&sb, "%s- %s: %s\n", markerIndent, node.Key, formatStylishValue(node.OldValue))
 				}
 
 				if isMap(node.NewValue) {
-					sb.WriteString(fmt.Sprintf("%s+ %s: {\n", markerIndent, node.Key))
+					fmt.Fprintf(&sb, "%s+ %s: {\n", markerIndent, node.Key)
 					sb.WriteString(formatStylishMapContent(node.NewValue.(map[string]interface{}), depth+1))
-					sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+					fmt.Fprintf(&sb, "%s}\n", keyIndent)
 				} else {
-					sb.WriteString(fmt.Sprintf("%s+ %s: %s\n", markerIndent, node.Key, formatStylishValue(node.NewValue)))
+					fmt.Fprintf(&sb, "%s+ %s: %s\n", markerIndent, node.Key, formatStylishValue(node.NewValue))
 				}
 			}
 		}
@@ -90,11 +90,11 @@ func formatStylishMapContent(m map[string]interface{}, depth int) string {
 	for _, key := range getSortedKeys(m) {
 		val := m[key]
 		if isMap(val) {
-			sb.WriteString(fmt.Sprintf("%s%s: {\n", keyIndent, key))
+			fmt.Fprintf(&sb, "%s%s: {\n", keyIndent, key)
 			sb.WriteString(formatStylishMapContent(val.(map[string]interface{}), depth+1))
-			sb.WriteString(fmt.Sprintf("%s}\n", keyIndent))
+			fmt.Fprintf(&sb, "%s}\n", keyIndent)
 		} else {
-			sb.WriteString(fmt.Sprintf("%s%s: %s\n", keyIndent, key, formatStylishValue(val)))
+			fmt.Fprintf(&sb, "%s%s: %s\n", keyIndent, key, formatStylishValue(val))
 		}
 	}
 	return sb.String()
